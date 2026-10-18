@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Link Analytics — SnipURL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-color: #0a0f1e;
+            --card-gradient: linear-gradient(145deg, #1e1b4b, #0f172a);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --input-bg: #1e293b;
+            --input-border: #334155;
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+            --error-color: #ef4444;
+            --success-color: #10b981;
+            --radius-card: 16px;
+            --radius-btn: 10px;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient background lighting */
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(140px);
+            opacity: 0.28;
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::before {
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, #3b82f6, transparent 70%);
+            top: -100px;
+            left: -100px;
+        }
+        body::after {
+            width: 480px;
+            height: 480px;
+            background: radial-gradient(circle, #8b5cf6, transparent 70%);
+            bottom: -100px;
+            right: -100px;
+        }
+
+        /* ── Top Navbar ─────────────────────────────────── */
+        .navbar {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .navbar-logo {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text-main);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            letter-spacing: -0.02em;
+        }
+
+        .navbar-link {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .navbar-link:hover {
+            color: #ffffff;
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateX(-3px);
+        }
+
+        /* ── Main Container ─────────────────────────────── */
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2.5rem 1.25rem;
+            flex: 1;
+        }
+
+        /* ── Page Header ────────────────────────────────── */
+        .page-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.4rem;
+            background: linear-gradient(135deg, #ffffff 40%, #93c5fd 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-header p {
+            color: var(--text-dim);
+            font-size: 1.05rem;
+        }
+
+        .code-badge {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+
+        /* ── Stat Cards Grid ────────────────────────────── */
+        .stats-grid {
+            display: flex;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 220px;
+            background: var(--card-gradient);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 1.5rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-status-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+            box-shadow: 0 0 10px var(--success-color);
+        }
+
+        /* ── Glass Section Cards ────────────────────────── */
+        .section-card {
+            background: var(--card-gradient);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 1.75rem;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ── Table Styling ──────────────────────────────── */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-dim);
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        td {
+            padding: 14px 16px;
+            font-size: 0.88rem;
+            color: var(--text-main);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        /* Zebra striping */
+        tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        tbody tr:hover {
+            background: rgba(59, 130, 246, 0.06);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-dim);
+            font-size: 0.95rem;
+        }
+
+        /* ── Top URLs Ranked List ───────────────────────── */
+        .top-urls-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .top-url-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .top-url-item:hover {
+            border-color: rgba(59, 130, 246, 0.35);
+            background: rgba(59, 130, 246, 0.05);
+            transform: translateX(4px);
+        }
+
+        .top-url-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 0;
+        }
+
+        .rank-badge {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .top-url-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 0;
+        }
+
+        .top-short-code {
+            font-weight: 700;
+            color: #93c5fd;
+            text-decoration: none;
+            font-size: 0.98rem;
+        }
+
+        .top-short-code:hover {
+            text-decoration: underline;
+        }
+
+        .top-long-url {
+            color: var(--text-dim);
+            font-size: 0.82rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 360px;
+        }
+
+        .click-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* ── Footer ─────────────────────────────────────── */
+        .footer {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            text-align: center;
+            padding: 2rem 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-dim);
+            font-size: 0.88rem;
+        }
+
+        .footer-tech {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-top: 0.35rem;
+        }
+
+        @media (max-width: 640px) {
+            .navbar {
+                padding: 1rem 1.25rem;
+            }
+            .stats-grid {
+                flex-direction: column;
+            }
+            .top-url-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            .top-long-url {
+                max-width: 240px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navbar -->
+    <nav class="navbar">
+        <a href="/" class="navbar-logo">⚡ SnipURL</a>
+        <a href="/" class="navbar-link">← Back to Home</a>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="container">
+        <!-- Page Header -->
+        <header class="page-header">
+            <h1>📊 Link Analytics</h1>
+            <p>Analyzing traffic for: <span class="code-badge">/<span th:text="${stats.shortUrl}"></span></span></p>
+        </header>
+
+        <!-- 3 Stat Cards in a row -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Clicks</div>
+                <div class="stat-value" th:text="${stats.totalClicks}">0</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Short Code</div>
+                <div class="stat-value" style="font-size: 1.8rem; font-family: monospace;" th:text="${stats.shortUrl}">code</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Status</div>
+                <div class="stat-status-row">
+                    <span class="status-dot"></span>
+                    <span>Active</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Click Activity Table -->
+        <section class="section-card">
+            <h2 class="section-header">Recent Click Activity</h2>
+            <div class="table-responsive">
+                <table th:if="${not #lists.isEmpty(stats.recentClicks)}">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Timestamp</th>
+                            <th>IP Address</th>
+                            <th>User Agent</th>
+                            <th>Country</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="click, iter : ${stats.recentClicks}">
+                            <td style="color: var(--text-dim);" th:text="${iter.count}">1</td>
+                            <td style="white-space: nowrap;" th:text="${click.clickedAt}">2026-10-18</td>
+                            <td th:text="${click.ipAddress}">127.0.0.1</td>
+                            <td style="max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                                th:text="${click.userAgent}" th:title="${click.userAgent}">Mozilla/5.0</td>
+                            <td th:text="${click.country != null ? click.country : 'IN'}">IN</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div th:if="${#lists.isEmpty(stats.recentClicks)}" class="empty-state">
+                    No clicks recorded yet 👀
+                </div>
+            </div>
+        </section>
+
+        <!-- Top 5 Most Clicked URLs Section -->
+        <section class="section-card">
+            <h2 class="section-header">🏆 Top Performing Links</h2>
+            <div id="top-urls-container">
+                <div class="empty-state">Loading...</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div>Built by Ishank Aggarwal · SnipURL · 2026</div>
+        <div class="footer-tech">Java · Spring Boot · Kafka · Redis · PostgreSQL</div>
+    </footer>
+
+    <!-- Vanilla JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var container = document.getElementById('top-urls-container');
+
+            fetch('/api/urls/top?limit=5')
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Network error loading top URLs');
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (!data || data.length === 0) {
+                        container.innerHTML = '<div class="empty-state">No URLs found yet 👀</div>';
+                        return;
+                    }
+
+                    var listDiv = document.createElement('div');
+                    listDiv.className = 'top-urls-list';
+
+                    data.forEach(function (item, index) {
+                        var card = document.createElement('div');
+                        card.className = 'top-url-item';
+
+                        var left = document.createElement('div');
+                        left.className = 'top-url-left';
+
+                        var badge = document.createElement('div');
+                        badge.className = 'rank-badge';
+                        badge.textContent = '#' + (index + 1);
+
+                        var info = document.createElement('div');
+                        info.className = 'top-url-info';
+
+                        var codeLink = document.createElement('a');
+                        codeLink.className = 'top-short-code';
+                        codeLink.href = '/' + encodeURIComponent(item.shortCode);
+                        codeLink.target = '_blank';
+                        codeLink.textContent = '/' + item.shortCode;
+
+                        var longUrlText = document.createElement('span');
+                        longUrlText.className = 'top-long-url';
+                        var rawUrl = item.longUrl || 'N/A';
+                        longUrlText.textContent = rawUrl.length > 40 ? rawUrl.substring(0, 40) + '...' : rawUrl;
+                        longUrlText.title = rawUrl;
+
+                        info.appendChild(codeLink);
+                        info.appendChild(longUrlText);
+
+                        left.appendChild(badge);
+                        left.appendChild(info);
+
+                        var clicksBadge = document.createElement('div');
+                        clicksBadge.className = 'click-badge';
+                        clicksBadge.textContent = item.clickCount + ' clicks';
+
+                        card.appendChild(left);
+                        card.appendChild(clicksBadge);
+                        listDiv.appendChild(card);
+                    });
+
+                    container.innerHTML = '';
+                    container.appendChild(listDiv);
+                })
+                .catch(function (error) {
+                    container.innerHTML = '<div class="empty-state" style="color: var(--error-color);">Could not load top links</div>';
+                });
+        });
+    </script>
+</body>
+</html>
