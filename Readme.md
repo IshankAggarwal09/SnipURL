@@ -68,11 +68,11 @@ Designed and developed from the ground up as a production-grade distributed URL 
                                   ▼
                           ┌──────────────┐
                           │    Kafka     │
-                          │  (KRaft)    │
-                          │             │
-                          │ Topic:      │
-                          │ url-click-  │
-                          │ events      │
+                          │  (KRaft)     │
+                          │              │
+                          │ Topic:       │
+                          │ url-click-   │
+                          │ events       │
                           └──────┬───────┘
                                  │
                                  ▼
