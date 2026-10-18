@@ -1,0 +1,61 @@
+# SnipURL by Ishank Aggarwal
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: url_shortener_postgres
+    environment:
+      POSTGRES_DB: url_shortener
+      POSTGRES_USER: url_shortener_user
+      POSTGRES_PASSWORD: url_shortener_pass
+      PGPORT: 5431
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080/api/urls}
+    ports:
+      - "5431:5431"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U url_shortener_user -d url_shortener -p 5431"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - url_shortener
+
+  redis:
+    image: redis:latest
+    container_name: url_shortener_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - url_shortener
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: url_shortener_kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qg
+    networks:
+      - url_shortener
+
+volumes:
+  pgdata:
+
+networks:
+  url_shortener:
+    driver: bridge
